@@ -3,8 +3,6 @@ package com.danielpclin.tetromino;
 import com.danielpclin.helpers.*;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Tetromino {
 
@@ -12,7 +10,7 @@ public class Tetromino {
     private Rotation rotation = Rotation.ZERO;
     private Block block = Block.NONE;
 
-    public static final Vector[][][] tetrominoOffset = { // SRS Rotation System
+    private static final Vector[][][] tetrominoOffset = { // SRS Rotation System
             { // I Tetromino Offset Data
                     { new Vector( 0, 0), new Vector(-1, 0), new Vector( 2, 0), new Vector(-1, 0), new Vector( 2, 0) },
                     { new Vector(-1, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-2) },
@@ -30,6 +28,58 @@ public class Tetromino {
                     { new Vector( 0, 0), new Vector( 1, 0), new Vector( 1,-1), new Vector( 0, 2), new Vector( 1, 2) },
                     { new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0) },
                     { new Vector( 0, 0), new Vector(-1, 0), new Vector(-1,-1), new Vector( 0, 2), new Vector(-1, 2) }
+            }
+    };
+
+    public static final Vector[][][] tetrominoShapeVector = { // SRS Rotation System
+            { // Block.NONE
+                    { new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0), new Vector( 0, 0) }  // Rotation.LEFT
+            },
+            { // Block.I
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector( 2, 0) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector( 0,-2) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector(-2, 0), new Vector(-1, 0), new Vector( 1, 0) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector( 0, 2), new Vector( 0, 1), new Vector( 0,-1) }  // Rotation.LEFT
+            },
+            { // Block.O
+                    { new Vector( 0, 0), new Vector( 1, 0), new Vector( 0, 1), new Vector( 1, 1) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 1, 0), new Vector( 0,-1), new Vector( 1,-1) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 0,-1), new Vector(-1,-1) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 0, 1), new Vector(-1, 1) }  // Rotation.LEFT
+            },
+            { // Block.J
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector(-1, 1) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector( 1, 1) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector( 1,-1) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector(-1,-1) }  // Rotation.LEFT
+            },
+            { // Block.L
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector( 1, 1) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector( 1,-1) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector(-1,-1) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector(-1, 1) }  // Rotation.LEFT
+            },
+            { // Block.S
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 1, 1), new Vector(-1, 0) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 1, 0), new Vector( 1,-1), new Vector( 0, 1) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector( 0,-1), new Vector(-1,-1), new Vector( 1, 0) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector(-1, 1), new Vector( 0,-1) }  // Rotation.LEFT
+            },
+            { // Block.T
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector( 0, 1) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector( 1, 0) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector( 1, 0), new Vector( 0,-1) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector( 0,-1), new Vector(-1, 0) }  // Rotation.LEFT
+            },
+
+            { // Block.Z
+                    { new Vector( 0, 0), new Vector( 0, 1), new Vector(-1, 1), new Vector( 1, 0) }, // Rotation.ZERO
+                    { new Vector( 0, 0), new Vector( 1, 0), new Vector( 1, 1), new Vector( 0,-1) }, // Rotation.RIGHT
+                    { new Vector( 0, 0), new Vector( 0,-1), new Vector( 1,-1), new Vector(-1, 0) }, // Rotation.TWO
+                    { new Vector( 0, 0), new Vector(-1, 0), new Vector(-1,-1), new Vector( 0, 1) }  // Rotation.LEFT
             }
     };
 
@@ -114,13 +164,16 @@ public class Tetromino {
         }
     }
 
-    // TODO implement block vectors with rotation in mind
-    private Vector[] getVectorsFromCenter(){
-        return new Vector[]{ new Vector(0, 0), new Vector(1, 0), new Vector(2, 0), new Vector(-1, 0) };
+
+
+    // Vectors representing tetromino
+    private Vector[] getVectors(){
+        return tetrominoShapeVector[block.ordinal()][rotation.ordinal()];
     }
 
+    // Points representing tetromino
     public Point[] getPoints(){
-        return Arrays.stream(getVectorsFromCenter())
+        return Arrays.stream(getVectors())
                 .map(vector -> vector.add(point))
                 .toArray(Point[]::new);
     }

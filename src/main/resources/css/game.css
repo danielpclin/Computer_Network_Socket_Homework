@@ -1,0 +1,7 @@
+.root{
+    -fx-background-color: gray;
+}
+.game-board{
+    /*-fx-border-width: 1;*/
+    /*-fx-border-color: black;*/
+}

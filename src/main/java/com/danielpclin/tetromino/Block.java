@@ -1,6 +1,6 @@
 package com.danielpclin.tetromino;
 
-import java.awt.Color;
+import javafx.scene.paint.Color;
 
 public enum Block {
     NONE, I, O, J, L, S, T, Z;
@@ -8,13 +8,13 @@ public enum Block {
     private Color color;
 
     static {
-        NONE.color = Color.WHITE; // new Color(255, 255, 255, 0);
+        NONE.color = Color.TRANSPARENT; // Color.WHITE;
         I.color = Color.CYAN;
         O.color = Color.YELLOW;
         J.color = Color.BLUE;
         L.color = Color.ORANGE;
         S.color = Color.GREEN;
-        T.color = new Color(128, 255, 128);
+        T.color = Color.PURPLE;
         Z.color = Color.RED;
     }
 

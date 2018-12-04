@@ -7,12 +7,13 @@ import java.util.Arrays;
 
 class Board {
 
-    private static final int BOARD_HEIGHT = 22;
-    private static final int BOARD_WIDTH = 10;
+    public static final int BOARD_HEIGHT = 20;
+    public static final int BOARD_WIDTH = 10;
 
-    private Tetromino tetromino = new Tetromino();
+    private boolean paused = false;
+
     private Block[][] boardMap;
-    private Block hold = Block.NONE;
+
 
 
 
@@ -32,9 +33,19 @@ class Board {
         }
     }
 
-    private void doGameCycle(){
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
+
+    public void placeTetromino(Tetromino tetromino){
 
     }
 
-
+    public Block[][] getBoardMap() {
+        return boardMap;
+    }
 }

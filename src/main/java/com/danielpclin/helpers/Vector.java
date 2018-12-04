@@ -45,4 +45,12 @@ public class Vector {
     public static Boolean equals(Vector vector1, Vector vector2){
         return vector1.x == vector2.x && vector1.y == vector2.y;
     }
+
+    @Override
+    public String toString() {
+        return "Vector{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
+    }
 }
