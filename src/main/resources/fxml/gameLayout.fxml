@@ -10,12 +10,12 @@
 <BorderPane xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.danielpclin.GameController"
-      prefHeight="600.0" prefWidth="800.0"
-      minHeight="600.0" minWidth="500.0" fx:id="boarderPane">
+      prefHeight="601.0" prefWidth="800.0"
+      minHeight="601.0" minWidth="500.0" fx:id="boarderPane">
 
     <center>
         <HBox alignment="TOP_CENTER" spacing="10">
-            <Canvas fx:id="holdTetrominoCanvas" width="100" height="100">
+            <Canvas fx:id="holdTetrominoCanvas" width="101" height="101">
             </Canvas>
             <StackPane styleClass="game-board">
                 <Canvas fx:id="gameBoardCanvas" width="301" height="601">
@@ -23,7 +23,7 @@
                 <Canvas fx:id="gameBoardGridCanvas" width="301" height="601">
                 </Canvas>
             </StackPane>
-            <Canvas fx:id="nextTetrominoCanvas" width="100" height="200">
+            <Canvas fx:id="nextTetrominoCanvas" width="101" height="201">
             </Canvas>
         </HBox>
     </center>
