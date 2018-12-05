@@ -2,6 +2,11 @@ package com.danielpclin.tetromino;
 
 import javafx.scene.paint.Color;
 
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
 public enum Block {
     NONE, I, O, J, L, S, T, Z;
 
@@ -21,4 +26,6 @@ public enum Block {
     public Color getColor() {
         return color;
     }
+
+    public static final List<Block> PLACEABLE_BLOCKS = unmodifiableList(asList(I, O, J, L, S, T, Z));
 }

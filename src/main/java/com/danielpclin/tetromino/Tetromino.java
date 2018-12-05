@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public class Tetromino {
 
-    private Point point = new Point();
+    private Point point = new Point(5, 20);
     private Rotation rotation = Rotation.ZERO;
     private Block block = Block.NONE;
 
@@ -164,8 +164,6 @@ public class Tetromino {
         }
     }
 
-
-
     // Vectors representing tetromino
     private Vector[] getVectors(){
         return tetrominoShapeVector[block.ordinal()][rotation.ordinal()];
@@ -174,8 +172,53 @@ public class Tetromino {
     // Points representing tetromino
     public Point[] getPoints(){
         return Arrays.stream(getVectors())
-                .map(vector -> vector.add(point))
+                .map(vector -> point.add(vector))
                 .toArray(Point[]::new);
+    }
+
+    public Point[] getDownPoints(){
+        return Arrays.stream(getVectors())
+                .map(vector -> {
+                    return point.add(vector).add(new Vector(0, -1));
+                })
+                .toArray(Point[]::new);
+    }
+
+    public Point[] getRightPoints(){
+        return Arrays.stream(getVectors())
+                .map(vector -> {
+                    return point.add(vector).add(new Vector(1, 0));
+                })
+                .toArray(Point[]::new);
+    }
+
+    public Point[] getLeftPoints(){
+        return Arrays.stream(getVectors())
+                .map(vector -> {
+                    return point.add(vector).add(new Vector(-1, 0));
+                })
+                .toArray(Point[]::new);
+    }
+
+    public void moveDown(){
+        point = point.add(new Vector(0, -1));
+    }
+
+    public void moveRight(){
+        point = point.add(new Vector(1, 0));
+    }
+
+    public void moveLeft(){
+        point = point.add(new Vector(-1, 0));
+    }
+
+    public Block getBlock() {
+        return block;
+    }
+
+    public void setBlock(Block block) {
+        point = new Point(5, 20);
+        this.block = block;
     }
 
     @Override

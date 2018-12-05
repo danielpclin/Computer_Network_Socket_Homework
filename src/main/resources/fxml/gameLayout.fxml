@@ -11,7 +11,7 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.danielpclin.GameController"
       prefHeight="601.0" prefWidth="800.0"
-      minHeight="601.0" minWidth="500.0" fx:id="boarderPane">
+      fx:id="boarderPane">
 
     <center>
         <HBox alignment="TOP_CENTER" spacing="10">
@@ -19,6 +19,8 @@
             </Canvas>
             <StackPane styleClass="game-board">
                 <Canvas fx:id="gameBoardCanvas" width="301" height="601">
+                </Canvas>
+                <Canvas fx:id="tetrominoCanvas" width="301" height="601">
                 </Canvas>
                 <Canvas fx:id="gameBoardGridCanvas" width="301" height="601">
                 </Canvas>
