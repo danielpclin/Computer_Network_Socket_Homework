@@ -68,6 +68,7 @@ public class GameController {
     public void initializeSceneEventListener(Scene scene){
         this.scene = scene;
         this.scene.setOnKeyPressed(e-> {
+            System.out.println(e);
             if (!updatingGame) {
                 switch (e.getCode()) {
                     case DOWN:
@@ -89,10 +90,10 @@ public class GameController {
                         // HOLD
                         break;
                     case Z:
-                        // Left Turn
+                        tetrominoTryCounterClockwise(tetromino);
                         break;
                     case X:
-                        // Right Turn
+                        tetrominoTryClockwise(tetromino);
                         break;
                     case P:
                         gameBoard.setPaused(!gameBoard.isPaused());
@@ -222,6 +223,24 @@ public class GameController {
     private void tetrominoTryMoveLeft(Tetromino tetromino){
         if (gameBoard.testValidMove(tetromino.getLeftPoints())){
             tetromino.moveLeft();
+        }
+    }
+
+    private void tetrominoTryClockwise(Tetromino tetromino){
+        for (int i = 0; i < 5; i++){
+            if (gameBoard.testValidMove(tetromino.getClockwisePoints(i))){
+                tetromino.rotateClockwise(i);
+                break;
+            }
+        }
+    }
+
+    private void tetrominoTryCounterClockwise(Tetromino tetromino){
+        for (int i = 0; i < 5; i++){
+            if (gameBoard.testValidMove(tetromino.getCounterClockwisePoints(i))){
+                tetromino.rotateCounterClockwise(i);
+                break;
+            }
         }
     }
 

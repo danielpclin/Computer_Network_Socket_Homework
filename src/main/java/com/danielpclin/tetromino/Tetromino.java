@@ -98,74 +98,78 @@ public class Tetromino {
         this.rotation = rotation;
     }
 
-    public Tetromino rotateClockwise(){
-        return rotateClockwise(0);
-    }
+//    public Tetromino rotateClockwise(){
+//        return rotateClockwise(0);
+//    }
+//
+//    public Tetromino rotateClockwise(int offset){
+//        if(offset <0 || offset > 4) {
+//            throw new IllegalArgumentException("Invalid offset number");
+//        }
+//        Vector pointOffset;
+//        switch (this.block){
+//            case NONE:
+//                return null;
+//            case J:
+//            case L:
+//            case S:
+//            case T:
+//            case Z:
+//                pointOffset = tetrominoOffset[2][rotation.ordinal()][offset].subtract(tetrominoOffset[2][rotation.clockwiseRotation().ordinal()][offset]);
+//                return new Tetromino(block, point.add(pointOffset), rotation);
+//            case I:
+//                pointOffset = tetrominoOffset[0][rotation.ordinal()][offset].subtract(tetrominoOffset[0][rotation.clockwiseRotation().ordinal()][offset]);
+//                return new Tetromino(block, point.add(pointOffset), rotation);
+//            case O:
+//                if(offset != 0) {
+//                    throw new IllegalArgumentException("Invalid offset number");
+//                }
+//                pointOffset = tetrominoOffset[1][rotation.ordinal()][offset].subtract(tetrominoOffset[1][rotation.clockwiseRotation().ordinal()][offset]);
+//                return new Tetromino(block, point.add(pointOffset), rotation);
+//            default:
+//                return null;
+//        }
+//    }
 
-    public Tetromino rotateClockwise(int offset){
-        if(offset <0 || offset > 4) {
-            throw new IllegalArgumentException("Invalid offset number");
-        }
-        Vector pointOffset;
-        switch (this.block){
-            case NONE:
-                return null;
-            case J:
-            case L:
-            case S:
-            case T:
-            case Z:
-                pointOffset = tetrominoOffset[2][rotation.ordinal()][offset].subtract(tetrominoOffset[2][rotation.clockwiseRotation().ordinal()][offset]);
-                return new Tetromino(block, point.add(pointOffset), rotation);
-            case I:
-                pointOffset = tetrominoOffset[0][rotation.ordinal()][offset].subtract(tetrominoOffset[0][rotation.clockwiseRotation().ordinal()][offset]);
-                return new Tetromino(block, point.add(pointOffset), rotation);
-            case O:
-                if(offset != 0) {
-                    throw new IllegalArgumentException("Invalid offset number");
-                }
-                pointOffset = tetrominoOffset[1][rotation.ordinal()][offset].subtract(tetrominoOffset[1][rotation.clockwiseRotation().ordinal()][offset]);
-                return new Tetromino(block, point.add(pointOffset), rotation);
-            default:
-                return null;
-        }
-    }
+//    public Tetromino rotateCounterClockwise(){
+//        return rotateCounterClockwise(0);
+//    }
 
-    public Tetromino rotateCounterClockwise(){
-        return rotateCounterClockwise(0);
-    }
-
-    public Tetromino rotateCounterClockwise(int offset){
-        if(offset <0 || offset > 4) {
-            throw new IllegalArgumentException("Invalid offset number");
-        }
-        Vector pointOffset;
-        switch (this.block){
-            case NONE:
-                return null;
-            case J:
-            case L:
-            case S:
-            case T:
-            case Z:
-                pointOffset = tetrominoOffset[2][rotation.ordinal()][offset].subtract(tetrominoOffset[2][rotation.counterClockwiseRotation().ordinal()][offset]);
-                return new Tetromino(block, point.add(pointOffset), rotation);
-            case I:
-                pointOffset = tetrominoOffset[0][rotation.ordinal()][offset].subtract(tetrominoOffset[0][rotation.counterClockwiseRotation().ordinal()][offset]);
-                return new Tetromino(block, point.add(pointOffset), rotation);
-            case O:
-                if(offset != 0) {
-                    throw new IllegalArgumentException("Invalid offset number");
-                }
-                pointOffset = tetrominoOffset[1][rotation.ordinal()][offset].subtract(tetrominoOffset[1][rotation.counterClockwiseRotation().ordinal()][offset]);
-                return new Tetromino(block, point.add(pointOffset), rotation);
-            default:
-                return null;
-        }
-    }
+//    public Tetromino rotateCounterClockwise(int offset){
+//        if(offset <0 || offset > 4) {
+//            throw new IllegalArgumentException("Invalid offset number");
+//        }
+//        Vector pointOffset;
+//        switch (this.block){
+//            case NONE:
+//                return null;
+//            case J:
+//            case L:
+//            case S:
+//            case T:
+//            case Z:
+//                pointOffset = tetrominoOffset[2][rotation.ordinal()][offset].subtract(tetrominoOffset[2][rotation.counterClockwiseRotation().ordinal()][offset]);
+//                return new Tetromino(block, point.add(pointOffset), rotation);
+//            case I:
+//                pointOffset = tetrominoOffset[0][rotation.ordinal()][offset].subtract(tetrominoOffset[0][rotation.counterClockwiseRotation().ordinal()][offset]);
+//                return new Tetromino(block, point.add(pointOffset), rotation);
+//            case O:
+//                if(offset != 0) {
+//                    throw new IllegalArgumentException("Invalid offset number");
+//                }
+//                pointOffset = tetrominoOffset[1][rotation.ordinal()][offset].subtract(tetrominoOffset[1][rotation.counterClockwiseRotation().ordinal()][offset]);
+//                return new Tetromino(block, point.add(pointOffset), rotation);
+//            default:
+//                return null;
+//        }
+//    }
 
     // Vectors representing tetromino
     private Vector[] getVectors(){
+        return getVectors(rotation);
+    }
+
+    private Vector[] getVectors(Rotation rotation){
         return tetrominoShapeVector[block.ordinal()][rotation.ordinal()];
     }
 
@@ -174,6 +178,69 @@ public class Tetromino {
         return Arrays.stream(getVectors())
                 .map(vector -> point.add(vector))
                 .toArray(Point[]::new);
+    }
+
+    public Point[] getPoints(Rotation rotation){
+        return getPoints(rotation, point);
+    }
+
+    public Point[] getPoints(Rotation rotation, Point point){
+        return Arrays.stream(getVectors(rotation))
+                .map(point::add)
+                .toArray(Point[]::new);
+    }
+
+    private Vector getRotationPointOffset(Rotation newRotation, int offset){
+        Vector pointOffset;
+        switch (this.block){
+            case NONE:
+                return null;
+            case J:
+            case L:
+            case S:
+            case T:
+            case Z:
+                pointOffset = tetrominoOffset[2][rotation.ordinal()][offset].subtract(tetrominoOffset[2][newRotation.ordinal()][offset]);
+                break;
+            case I:
+                pointOffset = tetrominoOffset[0][rotation.ordinal()][offset].subtract(tetrominoOffset[0][newRotation.ordinal()][offset]);
+                break;
+            case O:
+                if(offset != 0) {
+                    throw new IllegalArgumentException("Invalid offset number");
+                }
+                pointOffset = tetrominoOffset[1][rotation.ordinal()][offset].subtract(tetrominoOffset[1][newRotation.ordinal()][offset]);
+                break;
+            default:
+                return null;
+        }
+        return pointOffset;
+    }
+
+    public Point[] getClockwisePoints(int offset){
+        return getPoints(rotation.clockwiseRotation(), point.add(getRotationPointOffset(rotation.clockwiseRotation(), offset)));
+    }
+
+    public Point[] getClockwisePoints(){
+        return getClockwisePoints(0);
+    }
+
+    public Point[] getCounterClockwisePoints(int offset){
+        return getPoints(rotation.counterClockwiseRotation(), point.add(getRotationPointOffset(rotation.counterClockwiseRotation(), offset)));
+    }
+
+    public Point[] getCounterClockwisePoints(){
+        return getCounterClockwisePoints(0);
+    }
+
+    public void rotateClockwise(int offset){
+        point = point.add(getRotationPointOffset(rotation.clockwiseRotation(), offset));
+        rotation = rotation.clockwiseRotation();
+    }
+
+    public void rotateCounterClockwise(int offset){
+        point = point.add(getRotationPointOffset(rotation.counterClockwiseRotation(), offset));
+        rotation = rotation.counterClockwiseRotation();
     }
 
     public Point[] getDownPoints(){
@@ -218,6 +285,7 @@ public class Tetromino {
 
     public void setBlock(Block block) {
         point = new Point(5, 20);
+        rotation = Rotation.ZERO;
         this.block = block;
     }
 
