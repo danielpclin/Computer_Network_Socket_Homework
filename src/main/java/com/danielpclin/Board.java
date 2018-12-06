@@ -22,23 +22,6 @@ class Board {
         }
     }
 
-    void printBoard(){
-        for(Block[] column : boardMap){
-            for(Block cell : column){
-                System.out.print(cell + " ");
-            }
-            System.out.println();
-        }
-    }
-
-    public boolean isPaused() {
-        return paused;
-    }
-
-    public void setPaused(boolean paused) {
-        this.paused = paused;
-    }
-
     public void placeTetromino(Tetromino tetromino){
         for (Point point : tetromino.getPoints()){
             if (boardMap[point.getX()-1][point.getY()-1].equals(Block.NONE)){
@@ -66,5 +49,38 @@ class Board {
             }
         }
         return true;
+    }
+
+    public int clearFullLines(){
+        int removedLines = 0;
+        int[] shiftLines = new int[BOARD_HEIGHT];
+        int linesToShift = 0;
+        for (int height = 0; height < BOARD_HEIGHT; height++){
+            boolean needRemove = true;
+            for (int width = 0; width < BOARD_WIDTH; width++){
+                if (boardMap[width][height].equals(Block.NONE)) {
+                    needRemove = false;
+                    break;
+                }
+            }
+            if (needRemove) {
+                linesToShift++;
+            } else {
+                shiftLines[height] = linesToShift;
+            }
+        }
+        for (int height = 0; height < BOARD_HEIGHT; height++){
+            if (shiftLines[height]>0) {
+                for (int width = 0; width < BOARD_WIDTH; width++) {
+                    boardMap[width][height - shiftLines[height]] = boardMap[width][height];
+                }
+            }
+        }
+        for (int height = BOARD_HEIGHT - linesToShift; height < BOARD_HEIGHT; height++) {
+            for (int width = 0; width < BOARD_WIDTH; width++) {
+                boardMap[width][height] = Block.NONE;
+            }
+        }
+        return removedLines;
     }
 }

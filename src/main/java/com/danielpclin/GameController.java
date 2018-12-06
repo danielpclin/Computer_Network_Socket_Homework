@@ -1,7 +1,6 @@
 package com.danielpclin;
 
 import com.danielpclin.helpers.Point;
-import com.danielpclin.helpers.Vector;
 import com.danielpclin.tetromino.Block;
 import com.danielpclin.tetromino.Tetromino;
 
@@ -10,7 +9,6 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -43,14 +41,14 @@ public class GameController {
     private Board gameBoard = new Board();
     private Tetromino tetromino = new Tetromino();
     private Block holdTetromino = Block.NONE;
+    private boolean canHold = true;
     private Block nextTetromino = Block.NONE;
     private ArrayList<Block> tetrominoPickQueue = new ArrayList<>();
     private GraphicsContext gameGraphicsContent;
     private GraphicsContext gameGridGraphicsContent;
     private Timer gameTimer = new Timer();
-    private Timer delayLockTimer = new Timer();
     private Random random = new Random();
-    private boolean updatingGame = false;
+    private boolean isPaused = false;
 
     public void initialize() {
         gameGraphicsContent = gameBoardCanvas.getGraphicsContext2D();
@@ -68,47 +66,45 @@ public class GameController {
     public void initializeSceneEventListener(Scene scene){
         this.scene = scene;
         this.scene.setOnKeyPressed(e-> {
-            System.out.println(e);
-            if (!updatingGame) {
-                switch (e.getCode()) {
-                    case DOWN:
-                    case S:
-                        tetrominoTryMoveDown(tetromino);
-                        break;
-                    case LEFT:
-                    case A:
-                        tetrominoTryMoveLeft(tetromino);
-                        break;
-                    case RIGHT:
-                    case D:
-                        tetrominoTryMoveRight(tetromino);
-                        break;
-                    case SPACE:
-                        // Drop tetromino to bottom
-                        break;
-                    case C:
-                        // HOLD
-                        break;
-                    case Z:
-                        tetrominoTryCounterClockwise(tetromino);
-                        break;
-                    case X:
-                        tetrominoTryClockwise(tetromino);
-                        break;
-                    case P:
-                        gameBoard.setPaused(!gameBoard.isPaused());
-                        break;
-                    default:
-                }
-                renderGame();
+            switch (e.getCode()) {
+                case DOWN:
+                case S:
+                    tetrominoTryMoveDown();
+                    break;
+                case LEFT:
+                case A:
+                    tetrominoTryMoveLeft();
+                    break;
+                case RIGHT:
+                case D:
+                    tetrominoTryMoveRight();
+                    break;
+                case SPACE:
+                    tetrominoHardDrop();
+                    break;
+                case C:
+                    tetrominoTryHold();
+                    break;
+                case Z:
+                    tetrominoTryCounterClockwise();
+                    break;
+                case X:
+                case UP:
+                    tetrominoTryClockwise();
+                    break;
+                case P:
+                    isPaused = !isPaused;
+                    break;
+                default:
             }
+            renderGame();
+
         });
     }
 
     public void initilizeStageEventListener(Stage stage){
         stage.setOnCloseRequest(event -> {
             gameTimer.cancel();
-            delayLockTimer.cancel();
         });
     }
 
@@ -127,14 +123,16 @@ public class GameController {
     }
 
     private void doGameCycle(){
-        if (!gameBoard.isPaused()){
+        if (!isPaused){
             updateGame();
             renderGame();
         }
     }
 
     private void clearCanvas(GraphicsContext gc){
-        gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+        Platform.runLater(() -> {
+            gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+        });
     }
 
     private void drawGrid(){
@@ -196,37 +194,71 @@ public class GameController {
         }
         tetromino.setBlock(nextTetromino);
         nextTetromino = tetrominoPickQueue.remove(random.nextInt(tetrominoPickQueue.size()));
+        canHold = true;
     }
 
-    private void tetrominoTryMoveDown(Tetromino tetromino){
-        if (gameBoard.testValidMove(tetromino.getDownPoints())){
+    private void tetrominoHardDrop(){
+        while (gameBoard.testValidMove(tetromino.getDownPoints())){
             tetromino.moveDown();
-        } else {
-            delayLockTimer.schedule(new TimerTask(){
-                            @Override
-                            public void run() {
-                                if (!gameBoard.testValidMove(tetromino.getDownPoints())){
-                                    gameBoard.placeTetromino(tetromino);
-                                    pickTetromino();
-                                }
-                            }
-                        }, 750);
+        }
+        tetrominoLock();
+        clearFullLines();
+    }
+
+    private void tetrominoTryHold(){
+        if (canHold) {
+            if (holdTetromino.equals(Block.NONE)){
+                holdTetromino = tetromino.getBlock();
+                pickTetromino();
+            } else {
+                Block block = holdTetromino;
+                holdTetromino = tetromino.getBlock();
+                tetromino.setBlock(block);
+            }
+            canHold = false;
         }
     }
 
-    private void tetrominoTryMoveRight(Tetromino tetromino){
+    private void tetrominoTryMoveDown(){
+        if (gameBoard.testValidMove(tetromino.getDownPoints())){
+            tetromino.moveDown();
+            tetrominoDelayLock();
+        }
+    }
+
+    private void tetrominoDelayLock(){
+        if (!gameBoard.testValidMove(tetromino.getDownPoints())){
+            Timer timer = new Timer(true);
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    tetrominoLock();
+                    renderGame();
+                }
+            }, 750);
+        }
+    }
+
+    private void tetrominoLock(){
+        if (!gameBoard.testValidMove(tetromino.getDownPoints())){
+            gameBoard.placeTetromino(tetromino);
+            pickTetromino();
+        }
+    }
+
+    private void tetrominoTryMoveRight(){
         if (gameBoard.testValidMove(tetromino.getRightPoints())){
             tetromino.moveRight();
         }
     }
 
-    private void tetrominoTryMoveLeft(Tetromino tetromino){
+    private void tetrominoTryMoveLeft(){
         if (gameBoard.testValidMove(tetromino.getLeftPoints())){
             tetromino.moveLeft();
         }
     }
 
-    private void tetrominoTryClockwise(Tetromino tetromino){
+    private void tetrominoTryClockwise(){
         for (int i = 0; i < 5; i++){
             if (gameBoard.testValidMove(tetromino.getClockwisePoints(i))){
                 tetromino.rotateClockwise(i);
@@ -235,7 +267,7 @@ public class GameController {
         }
     }
 
-    private void tetrominoTryCounterClockwise(Tetromino tetromino){
+    private void tetrominoTryCounterClockwise(){
         for (int i = 0; i < 5; i++){
             if (gameBoard.testValidMove(tetromino.getCounterClockwisePoints(i))){
                 tetromino.rotateCounterClockwise(i);
@@ -244,22 +276,25 @@ public class GameController {
         }
     }
 
+    private void clearFullLines(){
+        gameBoard.clearFullLines();
+    }
+
     private void updateGame(){
-        if(gameBoard.isPaused()){
+        if(isPaused){
             return;
         }
-        updatingGame = true;
         if (tetromino.getBlock().equals(Block.NONE)){
             pickTetromino();
         }
-        tetrominoTryMoveDown(tetromino);
+        tetrominoTryMoveDown();
+        clearFullLines();
         System.out.println(tetromino);
-        updatingGame = false;
     }
 
     private void renderGame(){
         clearCanvas(gameGraphicsContent);
-        drawBoard(gameBoard);
         drawTetromino(tetromino);
+        drawBoard(gameBoard);
     }
 }
