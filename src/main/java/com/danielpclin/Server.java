@@ -1,145 +1,105 @@
 package com.danielpclin;
 
-import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.io.IOException;
 import java.util.*;
 
-public class Server {
+public class Server implements Runnable {
+    private final int port;
+    private ServerSocketChannel serverSocketChannel;
+    private Selector selector;
+    private ByteBuffer buf = ByteBuffer.allocate(256);
 
-    private String serverName = null;
-    private int serverPort = 0;
+    Server(int port) throws IOException {
+        this.port = port;
+        this.serverSocketChannel = ServerSocketChannel.open();
+        this.serverSocketChannel.socket().bind(new InetSocketAddress(port));
+        this.serverSocketChannel.configureBlocking(false);
+        this.selector = Selector.open();
 
-    public Server(String name, int port) {
-        serverName = name;
-        serverPort = port;
+        this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
-    public void start() {
+    @Override public void run() {
+        try {
+            System.out.println("Server starting on port " + this.port);
 
-        //set server address
-        InetSocketAddress serverSocketAddress = new InetSocketAddress(serverName, serverPort);
-        String localAddress = serverSocketAddress.getAddress().getHostAddress();
-
-        //try-with-resources statement, 
-        //following statement will close serverSocketChannel and selector automatically
-        try(ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-            Selector selector = Selector.open()) {
-
-            //Retrieves a server socket associated with this channel.
-            ServerSocket serverSocket = serverSocketChannel.socket();
-            //Binds the ServerSocket to a specific address
-            System.out.println("Bind server socekt to " + localAddress + ":" + serverPort);
-            serverSocket.bind(serverSocketAddress);
-            System.out.println("Non-blicking I/O TCP server binding success");
-
-            //set non-blocking mode
-            serverSocketChannel.configureBlocking(false);
-            //register the channel to the selector 
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
-            byte[] buf = new byte[1024];
-            InetSocketAddress clientSocketAddress = null;
-            SocketChannel clientChannel = null;
-            Iterator<SelectionKey> itr = null;
-            String clientAddress = null;
-            SelectionKey key = null;
-            int clientPort = 0;
-            int length = 0;
-            String str = null;
-
-            //select those channels that ready for IO operation
-            while(true) {
+            Iterator<SelectionKey> iter;
+            SelectionKey key;
+            while(this.serverSocketChannel.isOpen()) {
                 selector.select();
-                itr = selector.selectedKeys().iterator();
+                iter=this.selector.selectedKeys().iterator();
+                while(iter.hasNext()) {
+                    key = iter.next();
+                    iter.remove();
 
-                //for each selected channels, which represent as SelectionKey, do the IO task
-                while(itr.hasNext()) {
-                    key = itr.next();
-                    itr.remove();
-
-                    //case: serverSocketChannel ready for accepting new client
-                    if(key.isAcceptable()) {
-                        clientChannel = serverSocketChannel.accept();
-                        //set the clientChannel to non-blocking mode
-                        clientChannel.configureBlocking(false);
-                        //register clientChannel to selector and 
-                        clientChannel.register(selector, SelectionKey.OP_READ);
-
-                        clientSocketAddress = (InetSocketAddress)(clientChannel.socket().getRemoteSocketAddress());
-                        clientAddress = clientSocketAddress.getAddress().getHostAddress();
-                        clientPort = clientSocketAddress.getPort();
-                        System.out.println("Connecting to " + clientAddress + ":" + clientPort);
-                        continue;
-                    }
-
-                    //case: a clientChannel ready for read message
-                    if(key.isReadable()) {
-                        //Get the channel for which this key was created
-                        clientChannel = (SocketChannel)key.channel();
-                        try {
-                            length = clientChannel.read(buffer);
-                            //length = 0 or -1 if clientChannel has reached end-of-stream
-                            if(length <= 0) {
-                                throw new IOException();
-                            }
-                            //get message from buffer
-                            buffer.flip();
-                            buffer.get(buf, 0, length);
-
-                            str = new String(buf, 0, length);
-                            System.out.println(str);
-                            str = str.toUpperCase();
-                            buffer.clear();
-                            buffer.put(str.getBytes());
-
-                            //echo the message
-                            buffer.flip();
-                            clientChannel.write(buffer);
-                            buffer.clear();
-                        } catch(IOException e) {
-                            //client shutdown connection or other IO exception
-                            //Requests that the registration of this key's channel with its selector be cancelled
-                            key.cancel();
-
-                            clientSocketAddress = (InetSocketAddress)(clientChannel.socket().getRemoteSocketAddress());
-                            clientAddress = clientSocketAddress.getAddress().getHostAddress();
-                            clientPort = clientSocketAddress.getPort();
-                            System.out.println("Disconnecting to " + clientAddress + ":" + clientPort);
-
-                            //close the disconnected client channel
-                            try {
-                                clientChannel.close();
-                            } catch(IOException e1) {}
-                        }
-                    }
+                    if(key.isAcceptable()) this.handleAccept(key);
+                    if(key.isReadable()) this.handleRead(key);
                 }
             }
-
-        } catch(IOException e2) {
-            e2.printStackTrace();
-        } finally {
-            System.out.println("Server shutdown.");
+        } catch(IOException e) {
+            System.out.println("IOException, server of port " +this.port+ " terminating. Stack trace:");
+            e.printStackTrace();
         }
-
     }
 
-    public static void main(String[] args) {
-        //Default server address is 127.0.0.1:12000		
-        String serverName = "127.0.0.1";
-        int serverPort = 12000;
-
-        if(args.length >= 2) {
-            serverName = args[0];
-            try {
-                serverPort = Integer.parseInt(args[1]);
-            } catch(NumberFormatException e) {}
-        }
-
-        Server server = new Server(serverName, serverPort);
-        server.start();
+//    private final ByteBuffer welcomeBuf = ByteBuffer.wrap("Welcome to NioChat!\n".getBytes());
+    private void handleAccept(SelectionKey key) throws IOException {
+        SocketChannel sc = ((ServerSocketChannel) key.channel()).accept();
+        String address = (new StringBuilder( sc.socket().getInetAddress().toString() )).append(":").append( sc.socket().getPort() ).toString();
+        sc.configureBlocking(false);
+        sc.register(selector, SelectionKey.OP_READ, address);
+//        sc.write(welcomeBuf);
+//        welcomeBuf.rewind();
+        System.out.println("accepted connection from: "+address);
     }
 
+    private void handleRead(SelectionKey key) throws IOException {
+        SocketChannel ch = (SocketChannel) key.channel();
+        StringBuilder sb = new StringBuilder();
+
+        buf.clear();
+        int read = 0;
+        try {
+            while( (read = ch.read(buf)) > 0 ) {
+                buf.flip();
+                byte[] bytes = new byte[buf.limit()];
+                buf.get(bytes);
+                sb.append(new String(bytes));
+                buf.clear();
+            }
+        } catch (Exception e) {
+            key.cancel();
+            read = -1;
+        }
+        String msg;
+        if(read<0) {
+            msg = key.attachment()+" left connection.\n";
+            ch.close();
+        }
+        else {
+            msg = key.attachment()+": "+sb.toString();
+        }
+
+        System.out.println(msg);
+        broadcast(msg);
+    }
+
+    public void broadcast(String msg) throws IOException {
+        ByteBuffer msgBuf=ByteBuffer.wrap(msg.getBytes());
+        for(SelectionKey key : selector.keys()) {
+            if(key.isValid() && key.channel() instanceof SocketChannel) {
+                SocketChannel sch=(SocketChannel) key.channel();
+                sch.write(msgBuf);
+                msgBuf.rewind();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Server server = new Server(12000);
+        (new Thread(server)).start();
+    }
 }

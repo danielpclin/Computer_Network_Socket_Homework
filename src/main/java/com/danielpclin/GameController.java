@@ -1,6 +1,7 @@
 package com.danielpclin;
 
 import com.danielpclin.helpers.Point;
+import com.danielpclin.helpers.Vector;
 import com.danielpclin.tetromino.Block;
 import com.danielpclin.tetromino.Tetromino;
 
@@ -9,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -46,12 +48,16 @@ public class GameController {
     private ArrayList<Block> tetrominoPickQueue = new ArrayList<>();
     private GraphicsContext gameGraphicsContent;
     private GraphicsContext gameGridGraphicsContent;
+    private GraphicsContext nextGraphicsContent;
+    private GraphicsContext holdGraphicsContent;
     private Timer gameTimer = new Timer();
     private Random random = new Random();
     private boolean isPaused = false;
 
     public void initialize() {
         gameGraphicsContent = gameBoardCanvas.getGraphicsContext2D();
+        holdGraphicsContent = holdTetrominoCanvas.getGraphicsContext2D();
+        nextGraphicsContent = nextTetrominoCanvas.getGraphicsContext2D();
 
         // Draw grid on gameGridCanvas
         gameGridGraphicsContent = gameBoardGridCanvas.getGraphicsContext2D();
@@ -82,6 +88,7 @@ public class GameController {
                 case SPACE:
                     tetrominoHardDrop();
                     break;
+                case SHIFT:
                 case C:
                     tetrominoTryHold();
                     break;
@@ -195,6 +202,8 @@ public class GameController {
         tetromino.setBlock(nextTetromino);
         nextTetromino = tetrominoPickQueue.remove(random.nextInt(tetrominoPickQueue.size()));
         canHold = true;
+        //TODO gameover
+        drawNext();
     }
 
     private void tetrominoHardDrop(){
@@ -217,6 +226,7 @@ public class GameController {
             }
             canHold = false;
         }
+        drawHold();
     }
 
     private void tetrominoTryMoveDown(){
@@ -296,5 +306,46 @@ public class GameController {
         clearCanvas(gameGraphicsContent);
         drawTetromino(tetromino);
         drawBoard(gameBoard);
+    }
+
+    private void drawNext() {
+        drawSideCanvas(nextTetromino, nextGraphicsContent, nextTetrominoCanvas);
+    }
+
+    private void drawSideCanvas(Block nextTetromino, GraphicsContext nextGraphicsContent, Canvas nextTetrominoCanvas) {
+        Image image = new Image(getClass().getResource("/img/" + nextTetromino.getColorString() + ".png").toExternalForm());
+        final Vector drawOffset;
+        switch (nextTetromino){
+            case I:
+                drawOffset = new Vector(15 + BLOCK_PIXEL_LENGTH, 20 - BLOCK_PIXEL_LENGTH/2);
+                break;
+            case O:
+                drawOffset = new Vector(15 + BLOCK_PIXEL_LENGTH, 20);
+                break;
+            case J:
+            case L:
+            case S:
+            case T:
+            case Z:
+                drawOffset = new Vector(30 + BLOCK_PIXEL_LENGTH, 20);
+                break;
+            default:
+                drawOffset = null;
+        }
+        if (drawOffset != null) {
+            Platform.runLater(() -> {
+                nextGraphicsContent.clearRect(0, 0, nextTetrominoCanvas.getWidth(), nextTetrominoCanvas.getHeight());
+                for (Vector vector : Tetromino.TETROMINO_SHAPE_VECTOR[nextTetromino.ordinal()][0]) {
+                    Point point = vector.asPoint();
+                    nextGraphicsContent.drawImage(image, point.getX() * BLOCK_PIXEL_LENGTH + drawOffset.getX(), (1 - point.getY()) * BLOCK_PIXEL_LENGTH + drawOffset.getY());
+                }
+            });
+        }
+    }
+
+    private void drawHold() {
+        if (!holdTetromino.equals(Block.NONE)) {
+            drawSideCanvas(holdTetromino, holdGraphicsContent, holdTetrominoCanvas);
+        }
     }
 }

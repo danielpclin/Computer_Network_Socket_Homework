@@ -30,6 +30,10 @@ public class Vector {
         return new Point(this.x + point.x, this.y + point.y);
     }
 
+    public Point asPoint(){
+        return new Point(this.x, this.y);
+    }
+
     public Vector subtract(Vector vector){
         return new Vector(this.x - vector.x, this.y - vector.y);
     }

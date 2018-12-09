@@ -13,13 +13,13 @@ public class Client {
         serverPort = port;
     }
 
-    public void start() {
+    public void start(){
         //set server address
         SocketAddress severSocketAddress = new InetSocketAddress(serverName, serverPort);
 
         try(Socket clientSocket = new Socket()) {
             //connect to server in the specific timeout 3000 ms
-            System.out.println("Connect to server " + serverName + ":" + serverPort);
+            System.out.println("Connecting to server " + serverName + ":" + serverPort);
             clientSocket.connect(severSocketAddress, 3000);
 
             //get client address and port at local host
@@ -27,7 +27,7 @@ public class Client {
             String clientAddress = socketAddress.getAddress().getHostAddress();
             int clientPort = socketAddress.getPort();
             System.out.println("Client " + clientAddress + ":" + clientPort);
-            System.out.println("Connecting to server " + serverName + ":" + serverPort);
+            System.out.println("Connected to server " + serverName + ":" + serverPort);
 
             try {
                 InputStream inputStream = clientSocket.getInputStream();
@@ -50,18 +50,18 @@ public class Client {
                 e.printStackTrace();
             }
 
-        } catch(IOException e1) {
-            e1.printStackTrace();
-        } finally {
-            System.out.println("Connection shutdown");
+        } catch (ConnectException e) {
+            System.out.println("Connection failed");
+        } catch (IOException e) {
+             e.printStackTrace();
         }
     }
 
     private class ListeningTask implements Runnable {
-        private InputStream inputStream = null;
+        private InputStream inputStream;
 
-        public ListeningTask(InputStream in) {
-            inputStream = in;
+        public ListeningTask(InputStream inputStream) {
+            this.inputStream = inputStream;
         }
 
         @Override

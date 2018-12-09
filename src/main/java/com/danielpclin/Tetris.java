@@ -1,10 +1,17 @@
 package com.danielpclin;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import static java.lang.Thread.sleep;
 
 public class Tetris extends Application {
 
@@ -25,7 +32,21 @@ public class Tetris extends Application {
         gameController.startGame();
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    public static void main(String[] args) throws Exception{
+        Server server = new Server(12000);
+        (new Thread(server)).start();
+        Timer timer = new Timer(true);
+        timer.schedule(new TimerTask(){
+            @Override
+            public void run() {
+                try {
+                    server.broadcast("test");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 0, 1000);
+//        launch(args);
+        Platform.exit();
     }
 }

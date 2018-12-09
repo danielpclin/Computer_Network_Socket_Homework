@@ -15,7 +15,7 @@
 
     <center>
         <HBox alignment="TOP_CENTER" spacing="10">
-            <Canvas fx:id="holdTetrominoCanvas" width="101" height="101">
+            <Canvas fx:id="holdTetrominoCanvas" width="151" height="151">
             </Canvas>
             <StackPane styleClass="game-board">
                 <Canvas fx:id="gameBoardCanvas" width="301" height="601">
@@ -25,7 +25,7 @@
                 <Canvas fx:id="gameBoardGridCanvas" width="301" height="601">
                 </Canvas>
             </StackPane>
-            <Canvas fx:id="nextTetrominoCanvas" width="101" height="201">
+            <Canvas fx:id="nextTetrominoCanvas" width="151" height="101">
             </Canvas>
         </HBox>
     </center>
