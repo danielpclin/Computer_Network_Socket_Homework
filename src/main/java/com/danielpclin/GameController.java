@@ -151,22 +151,21 @@ public class GameController {
         }
     }
 
-    private void drawBlock(Point point, Color color, int block_length, GraphicsContext gc){
-        if (!color.equals(Color.TRANSPARENT)) {
+    private void drawBlock(Point point, Image image, int block_length, GraphicsContext gc){
+        if (image!=null) {
             Platform.runLater(() -> {
-                gc.setFill(color);
                 Point canvasPoint = convertPointToDraw(point);
-                gc.fillRect(canvasPoint.getX(), canvasPoint.getY(), block_length, block_length);
+                gc.drawImage(image, canvasPoint.getX(), canvasPoint.getY());
             });
         }
     }
 
-    private void drawBlock(Point point, Color color, GraphicsContext gc){
-        drawBlock(point, color, BLOCK_PIXEL_LENGTH, gc);
+    private void drawBlock(Point point, Image image, GraphicsContext gc){
+        drawBlock(point, image, BLOCK_PIXEL_LENGTH, gc);
     }
 
-    private void drawBlock(Point point, Color color){
-        drawBlock(point, color, gameGraphicsContent);
+    private void drawBlock(Point point, Image image){
+        drawBlock(point, image, gameGraphicsContent);
     }
 
     private Point convertPointToDraw(Point point, int block_length){
@@ -179,7 +178,7 @@ public class GameController {
 
     private void drawTetromino(Tetromino tetromino){
         for (Point point : tetromino.getPoints()){
-            drawBlock(point, tetromino.getBlock().getColor());
+            drawBlock(point, tetromino.getBlock().getImage());
         }
     }
 
@@ -187,7 +186,7 @@ public class GameController {
         Block[][] boardMap = gameBoard.getBoardMap();
         for (int width = 0; width < boardMap.length; width++){
             for (int height = 0; height < boardMap[width].length; height++){
-                drawBlock(new Point(width + 1, height + 1), boardMap[width][height].getColor());
+                drawBlock(new Point(width + 1, height + 1), boardMap[width][height].getImage());
             }
         }
     }

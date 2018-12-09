@@ -7,11 +7,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static java.lang.Thread.sleep;
 
 public class Tetris extends Application {
 
@@ -46,7 +43,7 @@ public class Tetris extends Application {
                 }
             }
         }, 0, 1000);
-//        launch(args);
+        launch(args);
         Platform.exit();
     }
 }
