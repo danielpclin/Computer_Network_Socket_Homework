@@ -312,7 +312,6 @@ public class GameController {
     }
 
     private void drawSideCanvas(Block nextTetromino, GraphicsContext nextGraphicsContent, Canvas nextTetrominoCanvas) {
-        Image image = new Image(getClass().getResource("/img/" + nextTetromino.getColorString() + ".png").toExternalForm());
         final Vector drawOffset;
         switch (nextTetromino){
             case I:
@@ -336,7 +335,7 @@ public class GameController {
                 nextGraphicsContent.clearRect(0, 0, nextTetrominoCanvas.getWidth(), nextTetrominoCanvas.getHeight());
                 for (Vector vector : Tetromino.TETROMINO_SHAPE_VECTOR[nextTetromino.ordinal()][0]) {
                     Point point = vector.asPoint();
-                    nextGraphicsContent.drawImage(image, point.getX() * BLOCK_PIXEL_LENGTH + drawOffset.getX(), (1 - point.getY()) * BLOCK_PIXEL_LENGTH + drawOffset.getY());
+                    nextGraphicsContent.drawImage(nextTetromino.getImage(), point.getX() * BLOCK_PIXEL_LENGTH + drawOffset.getX(), (1 - point.getY()) * BLOCK_PIXEL_LENGTH + drawOffset.getY());
                 }
             });
         }
