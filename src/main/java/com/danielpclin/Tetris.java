@@ -42,6 +42,7 @@ public class Tetris {
     public boolean tetrominoLock(){
         if (!gameBoard.testValidMove(tetromino.getDownPoints())){
             gameBoard.placeTetromino(tetromino);
+            clearFullLines();
             pickTetromino();
             return true;
         }

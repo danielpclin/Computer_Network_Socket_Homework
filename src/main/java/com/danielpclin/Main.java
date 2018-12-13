@@ -14,33 +14,28 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-//        FXMLLoader loader = new FXMLLoader();
-//        loader.setLocation(getClass().getResource("/fxml/gameLayout.fxml"));
-//        BorderPane root = loader.load();
-//        primaryStage.setTitle("Tetris");
-//        Scene scene = new Scene(root);
-//        scene.getStylesheets().add(getClass().getResource("/css/game.css").toExternalForm());
-//        primaryStage.setScene(scene);
-//        GameController gameController = loader.getController();
-//        gameController.initializeSceneEventListener(scene);
-//        gameController.initilizeStageEventListener(primaryStage);
-//        primaryStage.show();
-//        gameController.setMinimumConstraints(primaryStage);
-//        gameController.startGame();
-
         FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(getClass().getResource("/fxml/gameMenu.fxml"));
-        Pane root = loader.load();
+        loader.setLocation(getClass().getResource("/fxml/gameLayout.fxml"));
+        BorderPane root = loader.load();
         primaryStage.setTitle("Tetris");
         Scene scene = new Scene(root);
         scene.getStylesheets().add(getClass().getResource("/css/game.css").toExternalForm());
         primaryStage.setScene(scene);
-//        GameController gameController = loader.getController();
-//        gameController.initializeSceneEventListener(scene);
-//        gameController.initilizeStageEventListener(primaryStage);
+        GameController gameController = loader.getController();
+        gameController.initializeSceneEventListener(scene);
+        gameController.initilizeStageEventListener(primaryStage);
         primaryStage.show();
-//        gameController.setMinimumConstraints(primaryStage);
-//        gameController.startGame();
+        gameController.setMinimumConstraints(primaryStage);
+        gameController.startGame();
+
+//        FXMLLoader loader = new FXMLLoader();
+//        loader.setLocation(getClass().getResource("/fxml/gameMenu.fxml"));
+//        Pane root = loader.load();
+//        primaryStage.setTitle("Tetris");
+//        Scene scene = new Scene(root);
+//        scene.getStylesheets().add(getClass().getResource("/css/game.css").toExternalForm());
+//        primaryStage.setScene(scene);
+//        primaryStage.show();
     }
 
     public static void main(String[] args) throws Exception{
