@@ -179,25 +179,19 @@ public class Tetromino {
 
     public Point[] getDownPoints(){
         return Arrays.stream(getVectors())
-                .map(vector -> {
-                    return point.add(vector).add(new Vector(0, -1));
-                })
+                .map(vector -> point.add(vector).add(new Vector(0, -1)))
                 .toArray(Point[]::new);
     }
 
     public Point[] getRightPoints(){
         return Arrays.stream(getVectors())
-                .map(vector -> {
-                    return point.add(vector).add(new Vector(1, 0));
-                })
+                .map(vector -> point.add(vector).add(new Vector(1, 0)))
                 .toArray(Point[]::new);
     }
 
     public Point[] getLeftPoints(){
         return Arrays.stream(getVectors())
-                .map(vector -> {
-                    return point.add(vector).add(new Vector(-1, 0));
-                })
+                .map(vector -> point.add(vector).add(new Vector(-1, 0)))
                 .toArray(Point[]::new);
     }
 
