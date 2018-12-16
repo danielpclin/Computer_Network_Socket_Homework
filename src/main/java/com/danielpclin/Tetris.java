@@ -32,15 +32,16 @@ public class Tetris {
         }
     }
 
-    public boolean updateGame(){
+    public void updateGame(){
         if(paused){
-            return false;
+            return;
         }
-        return tetrominoTryMoveDown();
+        tetrominoTryMoveDown();
     }
 
     public boolean tetrominoLock(){
         if (!gameBoard.testValidMove(tetromino.getDownPoints())){
+
             gameBoard.placeTetromino(tetromino);
             clearFullLines();
             pickTetromino();
@@ -95,13 +96,13 @@ public class Tetris {
             nextTetromino = tetrominoPickQueue.remove(random.nextInt(tetrominoPickQueue.size()));
         }
         tetromino.setBlock(nextTetromino);
-        nextTetromino = tetrominoPickQueue.remove(random.nextInt(tetrominoPickQueue.size()));
-        canHold = true;
-//        if (!tetrominoCanPlace()) {
-//            gameover = true;
-//            tetromino.setBlock(Block.NONE);
-//        }
-        //TODO gameover
+        if (tetrominoCanPlace()){
+            nextTetromino = tetrominoPickQueue.remove(random.nextInt(tetrominoPickQueue.size()));
+            canHold = true;
+        } else {
+            gameover = true;
+            tetromino.setBlock(Block.NONE);
+        }
     }
 
     public void tetrominoHardDrop(){

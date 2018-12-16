@@ -1,26 +1,47 @@
 package com.danielpclin;
 
+import com.danielpclin.helpers.Broadcastable;
+
 import java.io.*;
 import java.net.*;
+import java.util.function.Consumer;
 
-public class Client {
+public class Client implements Runnable, Broadcastable {
 
-    private String serverName = null;
-    private int serverPort = 0;
+    private String serverName;
+    private int serverPort;
+    private Socket clientSocket;
+    private Consumer<String> messageFunction;
 
-    public Client(String name, int port) {
+    public Client(String name, int port, Consumer<String> function) {
         serverName = name;
         serverPort = port;
+        messageFunction = function;
     }
 
-    public void start(){
+    public Client(String name, int port) {
+        this(name, port, (msg)->{});
+    }
+
+    public Client(Consumer<String> function) {
+        this("127.0.0.1", 12000, function);
+    }
+
+    public Client(int port, Consumer<String> function) {
+        this("127.0.0.1", port, function);
+    }
+
+    @Override
+    public void run(){
         //set server address
         SocketAddress severSocketAddress = new InetSocketAddress(serverName, serverPort);
-
-        try(Socket clientSocket = new Socket()) {
+        try {
+            Socket clientSocket = new Socket();
             //connect to server in the specific timeout 3000 ms
             System.out.println("Connecting to server " + serverName + ":" + serverPort);
             clientSocket.connect(severSocketAddress, 3000);
+            System.out.println(clientSocket);
+            this.clientSocket = clientSocket;
 
             //get client address and port at local host
             InetSocketAddress socketAddress = (InetSocketAddress)clientSocket.getLocalSocketAddress();
@@ -31,25 +52,12 @@ public class Client {
 
             try {
                 InputStream inputStream = clientSocket.getInputStream();
-                OutputStream outputStream = clientSocket.getOutputStream();
                 //create a thread to read server's output(which is client's input)
                 Thread task = new Thread(new ListeningTask(inputStream));
                 task.start();
-
-                //read keyboard message into a buf and write the message to the server
-                byte[] buf = new byte[1024];
-                int length = System.in.read(buf);
-                //length = -1 if there is no more data
-                while(length > 0) {
-                    outputStream.write(buf, 0, length);
-                    outputStream.flush();
-                    length = System.in.read(buf);
-                }
-
             } catch(IOException e) {
-                e.printStackTrace();
+                System.out.println("Server closed connection (unexpectedly) - WRITE");
             }
-
         } catch (ConnectException e) {
             System.out.println("Connection failed");
         } catch (IOException e) {
@@ -57,10 +65,22 @@ public class Client {
         }
     }
 
+    @Override
+    public void broadcast(String message) {
+        if (clientSocket!=null) {
+            try {
+                OutputStream outputStream = clientSocket.getOutputStream();
+                outputStream.write(message.getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private class ListeningTask implements Runnable {
         private InputStream inputStream;
 
-        public ListeningTask(InputStream inputStream) {
+        private ListeningTask(InputStream inputStream) {
             this.inputStream = inputStream;
         }
 
@@ -72,13 +92,18 @@ public class Client {
                 int length = inputStream.read(buf);
                 while(length > 0) {
                     System.out.write(buf, 0, length);
+                    messageFunction.accept(new String(buf));
                     length = inputStream.read(buf);
                 }
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } catch(IOException e) {
-                e.printStackTrace();
+                System.out.println("Server closed connection (unexpectedly) - READ");
             }
         }
-
     }
 
     public static void main(String[] args) {
@@ -90,11 +115,13 @@ public class Client {
             serverName = args[0];
             try {
                 serverPort = Integer.parseInt(args[1]);
-            } catch(NumberFormatException e) {}
+            } catch (NumberFormatException e) {
+                System.out.println("錯誤的 port number");
+            }
         }
 
-        Client client = new Client(serverName, serverPort);
-        client.start();
+        Client client = new Client(serverName, serverPort, System.out::println);
+        (new Thread(client)).start();
     }
 
 }

@@ -1,19 +1,28 @@
 package com.danielpclin;
 
+import com.danielpclin.helpers.Broadcastable;
+
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
-public class Server implements Runnable {
+public class Server implements Runnable, Broadcastable {
     private final int port;
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
     private ByteBuffer buf = ByteBuffer.allocate(256);
+    private Function<String, String> messageFunction;
 
     Server(int port) throws IOException {
+        this(port, (message)->message);
+    }
+
+    Server(int port, Function<String, String> function) throws IOException {
         this.port = port;
+        this.messageFunction = function;
         this.serverSocketChannel = ServerSocketChannel.open();
         this.serverSocketChannel.socket().bind(new InetSocketAddress(port));
         this.serverSocketChannel.configureBlocking(false);
@@ -22,7 +31,20 @@ public class Server implements Runnable {
         this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
-    @Override public void run() {
+    Server() throws IOException {
+        this(12000, (message)->message);
+    }
+
+    Server(Function<String, String> function) throws IOException {
+        this(12000, function);
+    }
+
+    Server(Runnable runnable) throws IOException {
+        this(12000, (message)->message);
+    }
+
+    @Override
+    public void run() {
         try {
             System.out.println("Server starting on port " + this.port);
 
@@ -40,19 +62,16 @@ public class Server implements Runnable {
                 }
             }
         } catch(IOException e) {
-            System.out.println("IOException, server of port " +this.port+ " terminating. Stack trace:");
+            System.out.println("IOException, server of port " + this.port + " terminating. Stack trace:");
             e.printStackTrace();
         }
     }
 
-//    private final ByteBuffer welcomeBuf = ByteBuffer.wrap("Welcome to NioChat!\n".getBytes());
     private void handleAccept(SelectionKey key) throws IOException {
         SocketChannel sc = ((ServerSocketChannel) key.channel()).accept();
-        String address = (new StringBuilder( sc.socket().getInetAddress().toString() )).append(":").append( sc.socket().getPort() ).toString();
+        String address = sc.socket().getInetAddress().getHostAddress() + ":" + sc.socket().getPort();
         sc.configureBlocking(false);
         sc.register(selector, SelectionKey.OP_READ, address);
-//        sc.write(welcomeBuf);
-//        welcomeBuf.rewind();
         System.out.println("accepted connection from: "+address);
     }
 
@@ -72,23 +91,23 @@ public class Server implements Runnable {
             }
         } catch (Exception e) {
             key.cancel();
+            e.printStackTrace();
             read = -1;
         }
         String msg;
         if(read<0) {
             msg = key.attachment()+" left connection.\n";
             ch.close();
-        }
-        else {
+            System.out.println(msg);
+        } else {
             msg = key.attachment()+": "+sb.toString();
+            broadcast(messageFunction.apply(msg));
         }
-
-        System.out.println(msg);
-        broadcast(msg);
     }
 
+    @Override
     public void broadcast(String msg) throws IOException {
-        ByteBuffer msgBuf=ByteBuffer.wrap(msg.getBytes());
+        ByteBuffer msgBuf = ByteBuffer.wrap(msg.getBytes());
         for(SelectionKey key : selector.keys()) {
             if(key.isValid() && key.channel() instanceof SocketChannel) {
                 SocketChannel sch=(SocketChannel) key.channel();

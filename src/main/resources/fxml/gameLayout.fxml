@@ -15,18 +15,34 @@
 
     <center>
         <HBox alignment="TOP_CENTER" spacing="10">
-            <Canvas fx:id="holdTetrominoCanvas" width="151" height="151">
-            </Canvas>
-            <StackPane styleClass="game-board">
-                <Canvas fx:id="gameBoardCanvas" width="301" height="601">
+            <VBox alignment="BASELINE_CENTER">
+                <Label>
+                    Hold
+                </Label>
+                <Canvas fx:id="holdTetrominoCanvas" width="151" height="151">
                 </Canvas>
-                <Canvas fx:id="tetrominoCanvas" width="301" height="601">
-                </Canvas>
+            </VBox>
+            <StackPane>
                 <Canvas fx:id="gameBoardGridCanvas" width="301" height="601">
                 </Canvas>
+                <Canvas fx:id="gameBoardCanvas" width="301" height="601">
+                </Canvas>
+                <VBox alignment="CENTER" spacing="20">
+                    <Label visible="false" fx:id="gameoverLabel" styleClass="gameover-label">
+                        GameOver!
+                    </Label>
+                    <Button onAction="#startGame" fx:id="startBtn" focusTraversable="false">
+                        Start
+                    </Button>
+                </VBox>
             </StackPane>
-            <Canvas fx:id="nextTetrominoCanvas" width="151" height="101">
-            </Canvas>
+            <VBox alignment="BASELINE_CENTER">
+                <Label>
+                    Next
+                </Label>
+                <Canvas fx:id="nextTetrominoCanvas" width="151" height="101">
+                </Canvas>
+            </VBox>
         </HBox>
     </center>
 </BorderPane>

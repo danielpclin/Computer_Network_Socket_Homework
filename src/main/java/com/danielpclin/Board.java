@@ -22,6 +22,9 @@ class Board {
 
     public void placeTetromino(Tetromino tetromino){
         for (Point point : tetromino.getPoints()){
+            if (point.getX() > BOARD_WIDTH || point.getY() > BOARD_HEIGHT) {
+                continue;
+            }
             if (boardMap[point.getX()-1][point.getY()-1].equals(Block.NONE)){
                 boardMap[point.getX()-1][point.getY()-1] = tetromino.getBlock();
             } else {
