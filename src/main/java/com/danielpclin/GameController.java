@@ -16,43 +16,32 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GameController {
 
-    @FXML
-    private BorderPane boarderPane;
-
-    @FXML
-    private Canvas holdTetrominoCanvas;
-
-    @FXML
-    private Canvas gameBoardCanvas;
-
-    @FXML
-    private Canvas gameBoardGridCanvas;
-
-    @FXML
-    private Canvas nextTetrominoCanvas;
-
-    @FXML
-    private Label gameoverLabel;
-
-    @FXML
-    private Button startBtn;
+    @FXML private BorderPane boarderPane;
+    @FXML private Canvas holdTetrominoCanvas, gameBoardCanvas, gameBoardGridCanvas, nextTetrominoCanvas;
+    @FXML private ArrayList<Canvas> sideGameCanvas, sideGridCanvas;
+    @FXML private Label gameoverLabel;
+    @FXML private Button startBtn;
 
     private static final int BLOCK_PIXEL_LENGTH = 30;
 
-    private GraphicsContext gameGraphicsContent;
-    private GraphicsContext gameGridGraphicsContent;
-    private GraphicsContext nextGraphicsContent;
-    private GraphicsContext holdGraphicsContent;
+    private GraphicsContext gameGraphicsContent, gameGridGraphicsContent,
+            nextGraphicsContent, holdGraphicsContent;
+    private ArrayList<GraphicsContext> sideGameGraphicsContext = new ArrayList<>(0),
+            sideGridGraphicsContext = new ArrayList<>(0);
     private Timer gameTimer;
     private Tetris tetris;
     private Broadcastable broadcastable;
+    private ArrayList<String> sideClients = new ArrayList<>(0);
+    private Pattern socketAddressPattern = Pattern.compile("^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}:\\d*): (.*)");
+
     private EventHandler<KeyEvent> gameEventHandler = e-> {
         e.consume();
         if (!tetris.isGameOver()){
@@ -101,13 +90,13 @@ public class GameController {
     @FXML
     private void initialize() {
         gameGraphicsContent = gameBoardCanvas.getGraphicsContext2D();
+        gameGridGraphicsContent = gameBoardGridCanvas.getGraphicsContext2D();
         holdGraphicsContent = holdTetrominoCanvas.getGraphicsContext2D();
         nextGraphicsContent = nextTetrominoCanvas.getGraphicsContext2D();
-
-        // Draw grid on gameGridCanvas
-        gameGridGraphicsContent = gameBoardGridCanvas.getGraphicsContext2D();
-        gameGridGraphicsContent.setStroke(Color.BLACK);
-        drawGrid();
+        sideGameCanvas.forEach(canvas -> sideGameGraphicsContext.add(canvas.getGraphicsContext2D()));
+        sideGridCanvas.forEach(canvas -> sideGridGraphicsContext.add(canvas.getGraphicsContext2D()));
+        drawGrid(gameGridGraphicsContent, BLOCK_PIXEL_LENGTH);
+        sideGridGraphicsContext.forEach(graphicsContext -> drawGrid(graphicsContext, BLOCK_PIXEL_LENGTH / 2));
     }
 
     @FXML
@@ -119,6 +108,7 @@ public class GameController {
         gameTimer = new Timer(true);
         tetris = new Tetris();
         startBtn.setVisible(false);
+        gameoverLabel.setVisible(false);
         gameStart();
     }
 
@@ -162,31 +152,31 @@ public class GameController {
         });
     }
 
-    private void drawGrid(){
+    private void drawGrid(GraphicsContext graphicsContext, int pixelWidth){
         Image background1 = new Image(getClass().getResource("/img/background1.png").toExternalForm());
         Image background2 = new Image(getClass().getResource("/img/background2.png").toExternalForm());
-        for (int x = 0; x < BLOCK_PIXEL_LENGTH * Board.BOARD_WIDTH; x += BLOCK_PIXEL_LENGTH){
-            for (int y = 0; y < BLOCK_PIXEL_LENGTH * Board.BOARD_HEIGHT; y += BLOCK_PIXEL_LENGTH){
-                if ((x+y) % (2 * BLOCK_PIXEL_LENGTH) == 0) {
-                    gameGridGraphicsContent.drawImage(background1, x, y);
+        for (int x = 0; x < pixelWidth * Board.BOARD_WIDTH; x += pixelWidth){
+            for (int y = 0; y < pixelWidth * Board.BOARD_HEIGHT; y += pixelWidth){
+                if ((x+y) % (2 * pixelWidth) == 0) {
+                    graphicsContext.drawImage(background1, x, y, pixelWidth, pixelWidth);
                 } else {
-                    gameGridGraphicsContent.drawImage(background2, x, y);
+                    graphicsContext.drawImage(background2, x, y, pixelWidth, pixelWidth);
                 }
             }
         }
     }
 
-    private void drawBlock(Point point, Image image, int block_length, GraphicsContext gc){
+    private void drawBlock(Point point, Image image, GraphicsContext gc, int block_length){
         if (image!=null) {
             Platform.runLater(() -> {
-                Point canvasPoint = convertPointToDraw(point);
-                gc.drawImage(image, canvasPoint.getX(), canvasPoint.getY());
+                Point canvasPoint = convertPointToDraw(point, block_length);
+                gc.drawImage(image, canvasPoint.getX(), canvasPoint.getY(), block_length, block_length);
             });
         }
     }
 
     private void drawBlock(Point point, Image image, GraphicsContext gc){
-        drawBlock(point, image, BLOCK_PIXEL_LENGTH, gc);
+        drawBlock(point, image, gc, BLOCK_PIXEL_LENGTH);
     }
 
     private void drawBlock(Point point, Image image){
@@ -212,6 +202,15 @@ public class GameController {
         for (int width = 0; width < boardMap.length; width++){
             for (int height = 0; height < boardMap[width].length; height++){
                 drawBlock(new Point(width + 1, height + 1), boardMap[width][height].getImage());
+            }
+        }
+    }
+
+    private void drawBoard(Board gameBoard, GraphicsContext graphicsContext, int blockLength){
+        Block[][] boardMap = gameBoard.getBoardMap();
+        for (int width = 0; width < boardMap.length; width++){
+            for (int height = 0; height < boardMap[width].length; height++){
+                drawBlock(new Point(width + 1, height + 1), boardMap[width][height].getImage(), graphicsContext, blockLength);
             }
         }
     }
@@ -280,18 +279,29 @@ public class GameController {
         }
     }
 
+    //TODO
     private void receiveMessage(String message){
+        Matcher matcher = socketAddressPattern.matcher(message);
+        if (matcher.find()) {
+            if (sideClients.size()==0){
+                sideClients.add(matcher.group(1));
+            }
+            sideClients.indexOf(matcher.group(1));
 
+            Board board = Board.valueOf(matcher.group(2));
+            clearCanvas(sideGameGraphicsContext.get(0));
+            drawBoard(board, sideGameGraphicsContext.get(0), BLOCK_PIXEL_LENGTH/2);
+            System.out.println(matcher.group(1));
+            System.out.println(matcher.group(2));
+        }
     }
 
     private String prepareBroadcast(Board board, Tetromino tetromino){
-        StringBuilder stringBuilder = new StringBuilder(0);
-        for( Block[] col: board.getBoardMap() ){
-            for( Block block : col ){
-                stringBuilder.append(block.toChar());
-            }
-        }
+        StringBuilder stringBuilder = board.toStringBuilder();
         for ( Point point: tetromino.getPoints()){
+            if (point.getX() > Board.BOARD_WIDTH || point.getY() > Board.BOARD_HEIGHT){
+                continue;
+            }
             stringBuilder.replace((point.getX()-1)*Board.BOARD_HEIGHT+point.getY()-1,
                     (point.getX()-1)*Board.BOARD_HEIGHT+point.getY(),
                     String.valueOf(tetromino.getBlock().toChar()));
@@ -325,6 +335,4 @@ public class GameController {
         thread.setDaemon(true);
         thread.start();
     }
-
-
 }

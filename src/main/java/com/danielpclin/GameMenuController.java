@@ -7,15 +7,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
-
 public class GameMenuController{
 
-    @FXML
-    private VBox root;
+    @FXML private VBox root;
 
     @FXML
     private void startServer(ActionEvent event) throws IOException{
-        System.out.println("server");
         GameController gameController = switchToGameView();
         if (gameController!=null){
             gameController.startServer();
@@ -24,7 +21,6 @@ public class GameMenuController{
 
     @FXML
     private void startClient(ActionEvent event) throws IOException{
-        System.out.println("client");
         GameController gameController = switchToGameView();
         if (gameController!=null){
             gameController.startClient();
@@ -39,7 +35,8 @@ public class GameMenuController{
             this.root.getScene().setRoot(root);
             return loader.getController();
         } catch (IOException e) {
-            System.out.println("Can't find game layout fxml file.");
+            e.printStackTrace();
+            System.out.println("Something wrong with fxml file.");
             return null;
         }
     }

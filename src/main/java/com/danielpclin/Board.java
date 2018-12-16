@@ -14,9 +14,20 @@ class Board {
     private Block[][] boardMap;
 
     Board(){
-        boardMap = new Block[BOARD_WIDTH][BOARD_HEIGHT];
-        for (Block[] column: boardMap) {
+        this.boardMap = new Block[BOARD_WIDTH][BOARD_HEIGHT];
+        for (Block[] column: this.boardMap) {
             Arrays.fill(column, Block.NONE);
+        }
+    }
+
+    private Board(Block[][] boardMap){
+        if (boardMap.length == BOARD_WIDTH || boardMap[0].length == BOARD_HEIGHT){
+            this.boardMap = boardMap;
+        } else {
+            this.boardMap = new Block[BOARD_WIDTH][BOARD_HEIGHT];
+            for (Block[] column: this.boardMap) {
+                Arrays.fill(column, Block.NONE);
+            }
         }
     }
 
@@ -83,5 +94,25 @@ class Board {
             }
         }
         return removedLines;
+    }
+
+    public StringBuilder toStringBuilder(){
+        StringBuilder stringBuilder = new StringBuilder(0);
+        for( Block[] col: this.getBoardMap() ){
+            for( Block block : col ){
+                stringBuilder.append(block.toChar());
+            }
+        }
+        return stringBuilder;
+    }
+
+    public static Board valueOf(String string){
+        Block[][] boardMap = new Block[BOARD_WIDTH][BOARD_HEIGHT];
+        for (int width = 0; width < boardMap.length; width++){
+            for (int height = 0; height < boardMap[width].length; height++){
+                boardMap[width][height] = Block.valueOf(string.charAt(width*Board.BOARD_HEIGHT+height));
+            }
+        }
+        return new Board(boardMap);
     }
 }

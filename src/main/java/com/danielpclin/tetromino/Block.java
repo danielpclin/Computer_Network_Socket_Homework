@@ -44,4 +44,13 @@ public enum Block {
     public char toChar() {
         return aChar;
     }
+
+    public static Block valueOf(char c){
+        for (Block block: values()){
+            if( block.aChar == c ){
+                return block;
+            }
+        }
+        return Block.NONE;
+    }
 }

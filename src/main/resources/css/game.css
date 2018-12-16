@@ -22,3 +22,6 @@
     -fx-text-fill: #202020;
     -fx-padding: 5;
 }
+.test{
+    -fx-background-color: yellow;
+}

@@ -80,7 +80,7 @@ public class Server implements Runnable, Broadcastable {
         StringBuilder sb = new StringBuilder();
 
         buf.clear();
-        int read = 0;
+        int read;
         try {
             while( (read = ch.read(buf)) > 0 ) {
                 buf.flip();
@@ -100,15 +100,15 @@ public class Server implements Runnable, Broadcastable {
             ch.close();
             System.out.println(msg);
         } else {
-            msg = key.attachment()+": "+sb.toString();
+            msg = sb.toString();
             broadcast(messageFunction.apply(msg));
         }
     }
 
     @Override
     public void broadcast(String msg) throws IOException {
-        ByteBuffer msgBuf = ByteBuffer.wrap(msg.getBytes());
         for(SelectionKey key : selector.keys()) {
+            ByteBuffer msgBuf = ByteBuffer.wrap((key.attachment()+": "+msg).getBytes());
             if(key.isValid() && key.channel() instanceof SocketChannel) {
                 SocketChannel sch=(SocketChannel) key.channel();
                 sch.write(msgBuf);
