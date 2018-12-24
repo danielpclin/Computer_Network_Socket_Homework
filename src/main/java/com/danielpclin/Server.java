@@ -15,6 +15,7 @@ public class Server implements Runnable, Broadcastable {
     private Selector selector;
     private ByteBuffer buf = ByteBuffer.allocate(256);
     private Function<String, String> messageFunction;
+    private InetSocketAddress serverAddress;
 
     Server(int port) throws IOException {
         this(port, (message)->message);
@@ -27,7 +28,6 @@ public class Server implements Runnable, Broadcastable {
         this.serverSocketChannel.socket().bind(new InetSocketAddress(port));
         this.serverSocketChannel.configureBlocking(false);
         this.selector = Selector.open();
-
         this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
@@ -72,7 +72,8 @@ public class Server implements Runnable, Broadcastable {
         String address = sc.socket().getInetAddress().getHostAddress() + ":" + sc.socket().getPort();
         sc.configureBlocking(false);
         sc.register(selector, SelectionKey.OP_READ, address);
-        System.out.println("accepted connection from: "+address);
+        messageFunction.apply("EST- [" + address + "]");
+        System.out.println("accepted connection from: " + address);
     }
 
     private void handleRead(SelectionKey key) throws IOException {
@@ -96,8 +97,9 @@ public class Server implements Runnable, Broadcastable {
         }
         String msg;
         if(read<0) {
-            msg = key.attachment()+" left connection.\n";
+            msg = key.attachment() + " left connection.\n";
             ch.close();
+            messageFunction.apply("DSC- [" + key.attachment() + "]");
             System.out.println(msg);
         } else {
             msg = sb.toString();
@@ -107,8 +109,8 @@ public class Server implements Runnable, Broadcastable {
 
     @Override
     public void broadcast(String msg) throws IOException {
+        ByteBuffer msgBuf = ByteBuffer.wrap(msg.getBytes());
         for(SelectionKey key : selector.keys()) {
-            ByteBuffer msgBuf = ByteBuffer.wrap((key.attachment()+": "+msg).getBytes());
             if(key.isValid() && key.channel() instanceof SocketChannel) {
                 SocketChannel sch=(SocketChannel) key.channel();
                 sch.write(msgBuf);
@@ -117,8 +119,7 @@ public class Server implements Runnable, Broadcastable {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        Server server = new Server(12000);
-        (new Thread(server)).start();
+    public int getPort() {
+        return port;
     }
 }

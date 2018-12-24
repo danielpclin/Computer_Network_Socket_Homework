@@ -52,8 +52,7 @@ public class Client implements Runnable, Broadcastable {
                 byte[] buf = new byte[1024];
                 int length = inputStream.read(buf);
                 while(length > 0) {
-                    String message = new String(buf);
-                    System.out.println(message);
+                    String message = new String(buf, 0, length);
                     messageFunction.accept(message);
                     length = inputStream.read(buf);
                 }
@@ -80,22 +79,10 @@ public class Client implements Runnable, Broadcastable {
         }
     }
 
-    public static void main(String[] args) {
-        //Default server address is 127.0.0.1:12000		
-        String serverName = "127.0.0.1";
-        int serverPort = 12000;
-
-        if(args.length >= 2) {
-            serverName = args[0];
-            try {
-                serverPort = Integer.parseInt(args[1]);
-            } catch (NumberFormatException e) {
-                System.out.println("錯誤的 port number");
-            }
-        }
-
-        Client client = new Client(serverName, serverPort, (msg)->{});
-        (new Thread(client)).start();
+    public String getClientAddress(){
+        InetSocketAddress socketAddress = (InetSocketAddress)clientSocket.getLocalSocketAddress();
+        String clientAddress = socketAddress.getAddress().getHostAddress();
+        int clientPort = socketAddress.getPort();
+        return clientAddress + ":" + clientPort;
     }
-
 }

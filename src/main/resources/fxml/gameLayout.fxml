@@ -31,10 +31,11 @@
                 <Canvas fx:id="gameBoardCanvas" width="300" height="600">
                 </Canvas>
                 <VBox alignment="CENTER" spacing="20">
-                    <Label visible="false" fx:id="gameoverLabel" styleClass="gameover-label">
+                    <Label visible="false" fx:id="messageLabel" styleClass="gameOverlay"/>
+                    <Label visible="false" fx:id="gameoverLabel" styleClass="gameOverlay">
                         GameOver!
                     </Label>
-                    <Button onAction="#startGame" fx:id="startBtn" focusTraversable="false">
+                    <Button onAction="#startGameBtnHandler" fx:id="startBtn" focusTraversable="false" visible="false">
                         Start
                     </Button>
                 </VBox>

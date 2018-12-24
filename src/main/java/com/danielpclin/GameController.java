@@ -16,6 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.util.Pair;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 
 public class GameController {
 
+    @FXML private Label messageLabel;
     @FXML private BorderPane boarderPane;
     @FXML private Canvas holdTetrominoCanvas, gameBoardCanvas, gameBoardGridCanvas, nextTetrominoCanvas;
     @FXML private ArrayList<Canvas> sideGameCanvas, sideGridCanvas;
@@ -40,7 +42,8 @@ public class GameController {
     private Tetris tetris;
     private Broadcastable broadcastable;
     private ArrayList<String> sideClients = new ArrayList<>(0);
-    private Pattern socketAddressPattern = Pattern.compile("^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}:\\d*): (.*)");
+    private Pattern socketAddressPattern = Pattern.compile("^(\\[(?:(?:\\w+|(?:[0-9]{1,3}\\.){3}[0-9]{1,3}):\\d*)]): \\((\\d+)\\)([NIOTLJSZ]{200})");
+    private boolean isServer = false;
 
     private EventHandler<KeyEvent> gameEventHandler = e-> {
         e.consume();
@@ -100,23 +103,29 @@ public class GameController {
     }
 
     @FXML
-    private void startGame(){
-        if (!(gameTimer == null)){
-            gameOver();
-        }
-        initializeSceneEventListener();
-        gameTimer = new Timer(true);
-        tetris = new Tetris();
-        startBtn.setVisible(false);
-        gameoverLabel.setVisible(false);
-        gameStart();
+    private void startGameBtnHandler(){
+        StringBuilder msg = new StringBuilder("STG- [Server:" + ((Server)broadcastable).getPort() + "]");
+        sideClients.forEach((client)-> msg.append(" [").append(client).append("]"));
+        broadcastMessage(msg.toString());
+        startGame();
     }
 
     private void initializeSceneEventListener(){
         boarderPane.getScene().addEventFilter(KeyEvent.KEY_PRESSED, gameEventHandler);
     }
 
-    private void gameStart(){
+    private void startGame(){
+        if (!(gameTimer == null)){
+            gameOver();
+        }
+        initializeSceneEventListener();
+        clearCanvas(holdGraphicsContent);
+        clearCanvas(nextGraphicsContent);
+        gameTimer = new Timer(true);
+        tetris = new Tetris();
+        startBtn.setVisible(false);
+        gameoverLabel.setVisible(false);
+        messageLabel.setVisible(false);
         tetris.initializeGame();
         drawNext();
         gameTimer.scheduleAtFixedRate(new TimerTask(){
@@ -131,11 +140,22 @@ public class GameController {
         }, 0, 1000);
     }
 
+    private void broadcastGameOver(){
+        if (isServer) {
+            broadcastMessage("GVR- ");
+        }
+    }
+
     private void gameOver(){
         boarderPane.getScene().removeEventFilter(KeyEvent.KEY_PRESSED, gameEventHandler);
         gameTimer.cancel();
-        startBtn.setVisible(true);
-        gameoverLabel.setVisible(true);
+        if (isServer){
+            startBtn.setVisible(true);
+            gameoverLabel.setVisible(true);
+        } else {
+            messageLabel.setText("Waiting for others to finish game!");
+        }
+        messageLabel.setVisible(true);
     }
 
     private void doGameCycle(){
@@ -279,21 +299,56 @@ public class GameController {
         }
     }
 
-    //TODO
-    private void receiveMessage(String message){
-        Matcher matcher = socketAddressPattern.matcher(message);
-        if (matcher.find()) {
-            if (sideClients.size()==0){
-                sideClients.add(matcher.group(1));
-            }
-            sideClients.indexOf(matcher.group(1));
+    private Matcher parseRecievedMessage(String message){
+        return socketAddressPattern.matcher(message);
+    }
 
-            Board board = Board.valueOf(matcher.group(2));
-            clearCanvas(sideGameGraphicsContext.get(0));
-            drawBoard(board, sideGameGraphicsContext.get(0), BLOCK_PIXEL_LENGTH/2);
-            System.out.println(matcher.group(1));
-            System.out.println(matcher.group(2));
+    private void drawBoardToCorrespondSideCanvas(String message) {
+        Matcher matcher = parseRecievedMessage(message);
+        if (matcher.find()) {
+            int gcIndex =  sideClients.indexOf(matcher.group(1));
+            if (gcIndex >= 4 || gcIndex < 0){
+                return;
+            }
+            if (isServer && Integer.parseInt(matcher.group(2)) >= 40) {
+                broadcastGameOver();
+                // TODO everyone gameover
+            }
+            Board board = Board.valueOf(matcher.group(3));
+            clearCanvas(sideGameGraphicsContext.get(gcIndex));
+            drawBoard(board, sideGameGraphicsContext.get(gcIndex), BLOCK_PIXEL_LENGTH/2);
         }
+    }
+
+    private void serverRecieveMessage(String message){
+        System.out.println(message);
+        if (message.startsWith("EST- ")){
+            sideClients.add(message.substring(5));
+            return;
+        } else if (message.startsWith("DSC- ")) {
+            sideClients.remove(message.substring(5));
+            return;
+        } else if (message.startsWith("GVR- ")) {
+            //TODO
+        }
+        System.out.println(sideClients);
+        drawBoardToCorrespondSideCanvas(message);
+    }
+
+    private void clientReceiveMessage(String message){
+        System.out.println(message);
+        if (message.startsWith("STG- ")){
+            sideClients.clear();
+            Arrays.asList(message.substring(5).split(" ")).forEach(clientString->{
+                if ( !("[" + ((Client)broadcastable).getClientAddress() + "]").equals(clientString) ){
+                    sideClients.add(clientString);
+                }
+            });
+            startGame();
+            return;
+        }
+        System.out.println(sideClients);
+        drawBoardToCorrespondSideCanvas(message);
     }
 
     private String prepareBroadcast(Board board, Tetromino tetromino){
@@ -306,7 +361,12 @@ public class GameController {
                     (point.getX()-1)*Board.BOARD_HEIGHT+point.getY(),
                     String.valueOf(tetromino.getBlock().toChar()));
         }
-        return stringBuilder.toString();
+        stringBuilder.insert(0, "(" + tetris.getClearedLines() + ")");
+        if (isServer){
+            return "[Server:" + ((Server)broadcastable).getPort() + "]: " + stringBuilder.toString();
+        } else {
+            return "[" + ((Client)broadcastable).getClientAddress() + "]: " + stringBuilder.toString();
+        }
     }
 
     private void broadcastMessage(String msg) {
@@ -318,8 +378,11 @@ public class GameController {
     }
 
     public void startServer() throws IOException{
+        isServer = true;
+        messageLabel.setText("Waiting for other clients to finish game!");
+        startBtn.setVisible(true);
         Server server = new Server((message)->{
-            receiveMessage(message);
+            serverRecieveMessage(message);
             return message;
         });
         broadcastable = server;
@@ -329,7 +392,10 @@ public class GameController {
     }
 
     public void startClient() throws IOException{
-        Client client = new Client(this::receiveMessage);
+        isServer = false;
+        messageLabel.setText("Waiting for server to start game!");
+        messageLabel.setVisible(true);
+        Client client = new Client(this::clientReceiveMessage);
         broadcastable = client;
         Thread thread = new Thread(client);
         thread.setDaemon(true);

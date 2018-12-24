@@ -17,7 +17,7 @@
     -fx-background-insets: 0, 1, 2;
     -fx-background-radius: 5, 4, 3;
 }
-.gameover-label{
+.gameOverlay{
     -fx-background-color: #c1c1c1;
     -fx-text-fill: #202020;
     -fx-padding: 5;

@@ -17,6 +17,7 @@ public class Tetris {
     private Random random = new Random();
     private boolean paused = false;
     private boolean gameover = false;
+    private int clearedLines;
 
     public void togglePause(){
         paused = !paused;
@@ -85,7 +86,7 @@ public class Tetris {
     }
 
     public void clearFullLines(){
-        gameBoard.clearFullLines();
+        clearedLines += gameBoard.clearFullLines();
     }
 
     private void pickTetromino(){
@@ -110,7 +111,6 @@ public class Tetris {
             tetromino.moveDown();
         }
         tetrominoLock();
-        clearFullLines();
     }
 
     public boolean tetrominoTryHold(){
@@ -162,5 +162,9 @@ public class Tetris {
 
     public boolean isGameOver() {
         return gameover;
+    }
+
+    public int getClearedLines() {
+        return clearedLines;
     }
 }
