@@ -77,6 +77,7 @@ class Board {
             }
             if (needRemove) {
                 linesToShift++;
+                removedLines++;
             } else {
                 shiftLines[height] = linesToShift;
             }
