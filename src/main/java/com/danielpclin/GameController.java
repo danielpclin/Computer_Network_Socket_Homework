@@ -34,7 +34,7 @@ public class GameController {
 
     private static final int BLOCK_PIXEL_LENGTH = 30;
     private static final int MAX_PLAYERS = 4;
-    private static final int LINES_TO_WIN = 1;
+    private static final int LINES_TO_WIN = 40;
     private GraphicsContext gameGraphicsContent, gameGridGraphicsContent,
             nextGraphicsContent, holdGraphicsContent;
     private ArrayList<GraphicsContext> sideGameGraphicsContext = new ArrayList<>(0),
